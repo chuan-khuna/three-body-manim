@@ -1,0 +1,73 @@
+# Figure
+figure.figsize: 10.5, 5.0
+figure.dpi: 300.0
+figure.facecolor: 121516
+axes.facecolor: 121516
+savefig.dpi: 300.0
+savefig.facecolor: 121516
+savefig.bbox: tight
+savefig.pad_inches: 0.1
+
+# Grid
+grid.alpha: 0.1
+grid.color: f5f5f5 # dark bg light grid 4e5254
+grid.linewidth: 0.5
+grid.linestyle: - 
+
+# Axes
+axes.edgecolor: 1b2021
+axes.labelcolor: f5f5f5
+axes.labelsize: small
+axes.grid: True
+axes.linewidth: 0.5
+axes.spines.left: True
+axes.spines.bottom: True
+axes.spines.top: False
+axes.spines.right: False
+axes.axisbelow: True 
+
+# Tick
+xtick.direction: out
+ytick.direction: out
+xtick.color: 1b2021
+ytick.color: 1b2021
+xtick.labelcolor: f5f5f5
+ytick.labelcolor: f5f5f5
+xtick.major.size: 3.5
+xtick.major.width: 0.5
+ytick.major.size: 3.5
+ytick.major.width: 0.5
+xtick.labelsize: small
+ytick.labelsize: small
+
+# Line
+lines.solid_capstyle: projecting
+lines.solid_joinstyle: bevel
+lines.dash_joinstyle: bevel
+lines.dash_capstyle: butt
+lines.linewidth: 2.0
+lines.markeredgewidth: 1.0
+lines.markersize: 5.7
+
+
+# Typography
+font.family: MetricHPEXS
+font.size: 14
+text.color: f5f5f5
+
+# Title
+axes.titlelocation: left
+axes.titlesize: 14
+axes.titlecolor: f5f5f5
+axes.titlepad: 9
+axes.labelpad: 5.0
+figure.titlesize: 17.5
+
+# Legend
+# Remove the box edge colour
+legend.shadow: False
+legend.edgecolor: None
+
+# Patches
+patch.linewidth: 0
+patch.edgecolor: None

@@ -59,7 +59,7 @@ class NBodyAnimation(Scene):
         self.stars = initialise_stars(configs=position_velocity, masses=masses, G=1)
 
         self.dt = 1e-3
-        self.num_steps = 1e3
+        self.num_steps = 1e5
         self.df = self.compute()
 
         self.star_radius = 0.025
@@ -130,19 +130,19 @@ class NBodyAnimation(Scene):
 
     def construct(self):
 
-        num_samples = 100
+        num_samples = 500
         frame_time = 0.001
 
-        print(f"{num_samples}, {frame_time}s = {num_samples * frame_time} s")
+        # print(f"{num_samples}, {frame_time}s = {num_samples * frame_time} s")
 
         df = self._sample_df(self.df, num_samples=num_samples)
         df_by_star = self._get_star_df_dict(df)
-        print(df_by_star)
 
         star_names = df['star'].unique()
 
         star_objs = {}
         star_trackers: dict[str, list['ValueTracker']] = {}
+        star_traces = {}
 
         # intialise stars
         for i, star_name in enumerate(star_names):
@@ -164,18 +164,23 @@ class NBodyAnimation(Scene):
 
             star_objs[star_name] = star
 
+        # initialise the starting positions
         self.add(*[star for star in star_objs.values()])
         self.wait(0.25)
 
         for step in range(num_samples):
             args = []
             for star_name in star_names:
+                # update star positions
                 x_tracker, y_tracker = star_trackers[star_name]
                 x = df_by_star[star_name]['x'].iloc[step]
                 y = df_by_star[star_name]['y'].iloc[step]
                 args.append((x_tracker, x))
                 args.append((y_tracker, y))
 
-            self.play(
-                *[tracker.animate.set_value(val) for tracker, val in args], run_time=frame_time
-            )
+            # create animations for each star
+            star_animations = [tracker.animate.set_value(val) for tracker, val in args]
+
+            # create animation for traces
+
+            self.play(*star_animations, run_time=frame_time)

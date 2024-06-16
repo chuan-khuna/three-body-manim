@@ -58,33 +58,33 @@ class NBodyAnimation(Scene):
             G=1,
         )
 
-        # self.stars = initialise_stars(
-        #     configs=[
-        #         -0.7283341038,
-        #         0,
-        #         0,
-        #         0.8475982451,
-        #         2.8989177778,
-        #         0,
-        #         0,
-        #         -0.0255162097,
-        #         -2.1705836741,
-        #         0,
-        #         0,
-        #         -0.8220820354,
-        #     ],
-        #     weights=[1, 1, 1],
-        #     G=1,
-        # )
+        self.stars = initialise_stars(
+            configs=[
+                -1,
+                0,
+                0.186238,
+                0.578714,
+                1,
+                0,
+                0.186238,
+                0.578714,
+                0,
+                0,
+                -0.372476,
+                -1.157428,
+            ],
+            weights=[1, 1, 1],
+            G=1,
+        )
 
-        self.dt = 1e-3
-        self.num_steps = 100_000
+        self.dt = 1e-4
+        self.num_steps = 500_000
 
         self.star_radius = 0.025
 
         self.df = self.compute()
 
-    def compute(self):
+    def compute(self) -> pd.DataFrame:
         star_positions = {}
 
         stars = deepcopy(self.stars)
@@ -98,7 +98,7 @@ class NBodyAnimation(Scene):
             ncols=100,
             total=int(self.num_steps),
         ):
-
+            # current states
             backup_stars = deepcopy(stars)
 
             for k, star in stars.items():

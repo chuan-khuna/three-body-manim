@@ -13,4 +13,4 @@ media
 
 *.mp4
 
-!videos/Brouke-A14.mp4
+!videos/*.mp4

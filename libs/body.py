@@ -1,4 +1,5 @@
 import numpy as np
+import uuid
 
 from .constants import GRAVIATIONAL_CONST as G
 
@@ -8,7 +9,12 @@ class Body:
         self.mass = float(mass)
         self.position = np.array(position, dtype=float)
         self.velocity = np.array(velocity, dtype=float)
+
+        # tracking unique star by its name
         self.name = name
+        if name is None:
+            self.name = str(uuid.uuid4().hex[:6])
+
         self.G = G
 
     def calculate_force(self, other_body: 'Body'):
@@ -25,7 +31,7 @@ class Body:
         if isinstance(other_bodies, Body):
             other_bodies = [other_bodies]
 
-        other_bodies = [body for body in other_bodies if body != self]
+        other_bodies = [body for body in other_bodies if body.name != self.name]
 
         force = np.sum(
             np.array([self.calculate_force(other_body) for other_body in other_bodies]), axis=0
@@ -39,8 +45,4 @@ class Body:
         return new
 
     def __repr__(self):
-        if self.name is not None:
-            return (
-                f"{self.name}(mass={self.mass}, position={self.position}, velocity={self.velocity})"
-            )
-        return f"Body(mass={self.mass}, position={self.position}, velocity={self.velocity})"
+        return f"BODY:{self.name}(mass={self.mass}, position={self.position}, velocity={self.velocity})"

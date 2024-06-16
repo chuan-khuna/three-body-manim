@@ -35,6 +35,7 @@ class Body:
         new_position = self.position + (new_velocity * dt)
 
         new = Body(self.mass, new_position, new_velocity, self.name)
+        new.G = self.G
         return new
 
     def __repr__(self):

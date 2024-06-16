@@ -9,6 +9,8 @@ class Body:
         self.mass = float(mass)
         self.position = np.array(position, dtype=float)
         self.velocity = np.array(velocity, dtype=float)
+        self.force = None
+        self.acceleration = None
 
         # tracking unique star by its name
         self.name = name
@@ -30,13 +32,15 @@ class Body:
     def update(self, other_bodies: list, dt: float) -> 'Body':
         if isinstance(other_bodies, Body):
             other_bodies = [other_bodies]
-
         other_bodies = [body for body in other_bodies if body.name != self.name]
 
         force = np.sum(
             np.array([self.calculate_force(other_body) for other_body in other_bodies]), axis=0
         )
+        self.force = force
         acceleration = force / self.mass
+        self.acceleration = acceleration
+
         new_velocity = self.velocity + (acceleration * dt)
         new_position = self.position + (new_velocity * dt)
 

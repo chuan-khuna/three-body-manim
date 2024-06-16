@@ -42,18 +42,18 @@ class NBodyAnimation(Scene):
         super().__init__()
 
         position_velocity = [
-            0.901558607,
+            0.0132604844,
             0,
             0,
-            0.9840575737,
-            -0.6819108246,
+            1.054151921,
+            1.4157286016,
             0,
             0,
-            -1.6015183264,
-            -0.2196477824,
+            -0.2101466639,
+            -1.4289890859,
             0,
             0,
-            0.6174607527,
+            -0.8440052572,
         ]
         masses = [1, 1, 1]
 
@@ -63,7 +63,7 @@ class NBodyAnimation(Scene):
         self.num_steps = 5e4
         self.df = self.compute()
 
-        self.star_radius = 0.025
+        self.star_radius = 0.05
         self.trace_length = 100
 
     def compute(self) -> pd.DataFrame:
@@ -119,7 +119,7 @@ class NBodyAnimation(Scene):
 
     def create_star(self, x, y, colour):
         print(f"Creating star at {x}, {y}")
-        star_circle = Circle(radius=self.star_radius, color=colour)
+        star_circle = Circle(radius=self.star_radius, color=colour, fill_opacity=1)
         star_circle.move_to([x, y, 0])
         return star_circle
 
@@ -130,26 +130,19 @@ class NBodyAnimation(Scene):
             star_dict[star_name] = star_df
         return star_dict
 
-    def create_traces(self, star, current_step, trace_length, trace_df):
-        xs = trace_df['x'].iloc[max(0, current_step - trace_length) : current_step]
-        ys = trace_df['y'].iloc[max(0, current_step - trace_length) : current_step]
-
-        xs = np.array(xs)
-        ys = np.array(ys)
-
+    def update_trace(self, star, trace_group, max_length, x, y):
         color = star.get_color()
-        dots = [Dot([xs[i], ys[i], 0], color=color, radius=0.005) for i in range(len(xs))]
-        arcs = [
-            Line(color=color, stroke_width=0.2, stroke_opacity=0.25).put_start_and_end_on(
-                dots[i].get_center(), dots[i + 1].get_center()
-            )
-            for i in range(len(dots) - 1)
-        ]
-        return VGroup(*arcs)
+        last_line = trace_group[-1]
+        new_line = Line(last_line.get_end(), [x, y, 0], color=color, stroke_width=0.1)
+        new_trace = trace_group.copy()
+        new_trace.add(new_line)
+        if len(new_trace) > max_length:
+            new_trace.remove(new_trace[0])
+        return new_trace
 
     def construct(self):
 
-        num_samples = 1000
+        num_samples = 100
         frame_time = 0.001
 
         # print(f"{num_samples}, {frame_time}s = {num_samples * frame_time} s")
@@ -181,14 +174,14 @@ class NBodyAnimation(Scene):
                 )
             )
 
-            trace = VMobject()
-            trace.set_color(colours[i])
-
+            trace = VGroup()
+            trace.add(Line(star.get_center(), star.get_center(), color=star.get_color()))
             star_objs[star_name] = star
             star_traces[star_name] = trace
 
         # initialise the starting positions
         self.add(*[star for star in star_objs.values()])
+        self.add(*[trace for trace in star_traces.values()])
         self.wait(0.25)
 
         for step in range(num_samples):
@@ -202,23 +195,22 @@ class NBodyAnimation(Scene):
                 args.append((x_tracker, x))
                 args.append((y_tracker, y))
 
-            #     # create animation for traces
-            #     new_trace = self.create_traces(
-            #         star_objs[star_name], step, self.trace_length, df_by_star[star_name]
-            #     )
-
-            #     new_traces[star_name] = new_trace
+                # update traces
+                # old_trace = star_traces[star_name].copy()
+                new_trace = self.update_trace(
+                    star_objs[star_name], star_traces[star_name], self.trace_length, x, y
+                )
+                new_traces[star_name] = new_trace
 
             # create animations for each star
             star_animations = [tracker.animate.set_value(val) for tracker, val in args]
-            
-            # new_trace_group = VGroup(*[trace for trace in new_traces.values()])
-            # old_trace_group = VGroup(*[trace for trace in star_traces.values()])
-            # self.remove(old_trace_group)
 
-            # # update traces
-            # trace_anim = Transform(old_trace_group, new_trace_group)
+            new_trace_group = VGroup(*[trace for trace in new_traces.values()])
+            old_trace_group = VGroup(*[trace for trace in star_traces.values()])
 
-            self.play(*star_animations, run_time=frame_time)
+            # update traces
+            trace_anim = Transform(old_trace_group, new_trace_group)
+
+            self.play(*(star_animations + [trace_anim]), run_time=frame_time)
 
             star_traces = new_traces

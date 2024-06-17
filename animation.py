@@ -1,9 +1,10 @@
 from manim import *
 
 config["frame_size"] = (1440, 1440)
-config["frame_height"] = 4
-config["frame_width"] = 4
-config["frame_rate"] = 60
+config["frame_height"] = 3
+config["frame_width"] = 3
+FPS = 60
+config["frame_rate"] = FPS
 config["background_color"] = BLACK
 config['disable_caching_warning'] = True
 
@@ -45,28 +46,28 @@ class NBodyAnimation(Scene):
         super().__init__()
 
         position_velocity = [
-            0.0132604844,
+            -1,
+            0,
+            0.339393,
+            0.536191,
+            1,
+            0,
+            0.339393,
+            0.536191,
             0,
             0,
-            1.054151921,
-            1.4157286016,
-            0,
-            0,
-            -0.2101466639,
-            -1.4289890859,
-            0,
-            0,
-            -0.8440052572,
+            -0.678786,
+            -1.072382,
         ]
         masses = [1, 1, 1]
 
         self.stars = initialise_stars(configs=position_velocity, masses=masses, G=1)
 
-        self.dt = 1e-3
+        self.dt = 1e-4
 
         # how long to run the simulation for
         # how many it will repeat/completed
-        self.num_steps = 100e3
+        self.num_steps = 200e3
         self.df = self.compute()
 
         self.star_radius = 0.025
@@ -108,6 +109,7 @@ class NBodyAnimation(Scene):
         ax = plt.gca()
         ax.legend().set_visible(False)
         plt.savefig('nbody.png')
+
         return df
 
     def _sample_df(self, df, num_samples=1000):
@@ -139,13 +141,23 @@ class NBodyAnimation(Scene):
     def construct(self):
 
         # how long the output will be
+        # scaling simulation steps
         num_samples = 500
+        print(f"Number of samples: {num_samples}, at {FPS} fps = {num_samples / FPS} seconds")
 
-        self.trace_length = int(num_samples * 0.75)
+        # how long the trace will be
+        # percent of the total loop (simulated steps)
+        self.trace_length = int(num_samples * 0.5)
+
         frame_time = 0.001
 
         STROKE_WIDTH_START = 2.0
         OPACITY_START = 1.0
+
+        df = self._sample_df(self.df, num_samples=num_samples)
+        df_by_star = self._get_star_df_dict(df)
+
+        star_names = df['star'].unique()
 
         def trace_updater(traceobj, starobj):
             color = starobj.get_color()
@@ -169,13 +181,6 @@ class NBodyAnimation(Scene):
                 opacity = max(0.25, OPACITY_START * opacity_decay**i)
                 stroke_width = max(0.1, STROKE_WIDTH_START * stroke_decay**i)
                 line.set_stroke(color=line.get_stroke_color(), width=stroke_width, opacity=opacity)
-
-        # print(f"{num_samples}, {frame_time}s = {num_samples * frame_time} s")
-
-        df = self._sample_df(self.df, num_samples=num_samples)
-        df_by_star = self._get_star_df_dict(df)
-
-        star_names = df['star'].unique()
 
         star_objs = {}
         star_trackers: dict[str, list['ValueTracker']] = {}

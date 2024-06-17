@@ -1,9 +1,12 @@
 from manim import *
 
-config["frame_size"] = (2560, 1080)
+config["frame_size"] = (1440, 1440)
+config["frame_height"] = 2.5
+config["frame_width"] = 2.5
 config["frame_rate"] = 60
 config["background_color"] = BLACK
 config['disable_caching_warning'] = True
+
 
 import numpy as np
 
@@ -42,18 +45,18 @@ class NBodyAnimation(Scene):
         super().__init__()
 
         position_velocity = [
-            0.0132604844,
+            0.8733047091,
             0,
             0,
-            1.054151921,
-            1.4157286016,
+            1.0107764436,
+            -0.6254030288,
             0,
             0,
-            -0.2101466639,
-            -1.4289890859,
+            -1.6833533458,
+            -0.2479016803,
             0,
             0,
-            -0.8440052572,
+            0.6725769022,
         ]
         masses = [1, 1, 1]
 
@@ -63,8 +66,8 @@ class NBodyAnimation(Scene):
         self.num_steps = 5e4
         self.df = self.compute()
 
-        self.star_radius = 0.05
-        self.trace_length = 100
+        self.star_radius = 0.025
+        self.trace_length = 20
 
     def compute(self) -> pd.DataFrame:
         star_positions = {}
@@ -133,16 +136,26 @@ class NBodyAnimation(Scene):
     def update_trace(self, star, trace_group, max_length, x, y):
         color = star.get_color()
         last_line = trace_group[-1]
-        new_line = Line(last_line.get_end(), [x, y, 0], color=color, stroke_width=0.1)
+        new_line = Line(last_line.get_end(), [x, y, 0], color=color, stroke_width=0.4)
         new_trace = trace_group.copy()
         new_trace.add(new_line)
         if len(new_trace) > max_length:
             new_trace.remove(new_trace[0])
+            trace_group.remove(trace_group[0])
         return new_trace
+
+    # def update_trace_same(self, star, trace_group, max_length, x, y):
+    #     color = star.get_color()
+    #     last_line = trace_group[-1]
+    #     new_line = Line(last_line.get_end(), [x, y, 0], color=color, stroke_width=0.1)
+    #     trace_group.add(new_line)
+    #     if len(trace_group) > max_length:
+    #         trace_group.remove(trace_group[0])
+    #     return trace_group
 
     def construct(self):
 
-        num_samples = 100
+        num_samples = 200
         frame_time = 0.001
 
         # print(f"{num_samples}, {frame_time}s = {num_samples * frame_time} s")
@@ -179,11 +192,12 @@ class NBodyAnimation(Scene):
             star_objs[star_name] = star
             star_traces[star_name] = trace
 
-        # initialise the starting positions
+        # initialise starting conditions
         self.add(*[star for star in star_objs.values()])
         self.add(*[trace for trace in star_traces.values()])
         self.wait(0.25)
 
+        # animate
         for step in range(num_samples):
             args = []
             new_traces = {}
@@ -196,21 +210,20 @@ class NBodyAnimation(Scene):
                 args.append((y_tracker, y))
 
                 # update traces
-                # old_trace = star_traces[star_name].copy()
+                old_trace = star_traces[star_name].copy()
                 new_trace = self.update_trace(
-                    star_objs[star_name], star_traces[star_name], self.trace_length, x, y
+                    star_objs[star_name], old_trace, self.trace_length, x, y
                 )
                 new_traces[star_name] = new_trace
 
             # create animations for each star
             star_animations = [tracker.animate.set_value(val) for tracker, val in args]
 
-            new_trace_group = VGroup(*[trace for trace in new_traces.values()])
-            old_trace_group = VGroup(*[trace for trace in star_traces.values()])
-
             # update traces
-            trace_anim = Transform(old_trace_group, new_trace_group)
+            trace_anim = [
+                Transform(star_traces[star_name], new_traces[star_name]) for star_name in star_names
+            ]
 
-            self.play(*(star_animations + [trace_anim]), run_time=frame_time)
+            self.play(*(star_animations + trace_anim), run_time=frame_time)
 
             star_traces = new_traces

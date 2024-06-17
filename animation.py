@@ -63,7 +63,10 @@ class NBodyAnimation(Scene):
         self.stars = initialise_stars(configs=position_velocity, masses=masses, G=1)
 
         self.dt = 1e-3
-        self.num_steps = 50e3
+
+        # how long to run the simulation for
+        # how many it will repeat/completed
+        self.num_steps = 100e3
         self.df = self.compute()
 
         self.star_radius = 0.025
@@ -121,7 +124,7 @@ class NBodyAnimation(Scene):
         return pd.concat(sampled_dfs).reset_index(drop=True)
 
     def create_star(self, x, y, colour):
-        print(f"Creating star at {x}, {y}")
+        # print(f"Creating star at {x}, {y}")
         star_circle = Circle(radius=self.star_radius, color=colour, fill_opacity=1)
         star_circle.move_to([x, y, 0])
         return star_circle
@@ -135,9 +138,14 @@ class NBodyAnimation(Scene):
 
     def construct(self):
 
+        # how long the output will be
         num_samples = 500
-        self.trace_length = num_samples // 4
+
+        self.trace_length = int(num_samples * 0.75)
         frame_time = 0.001
+
+        STROKE_WIDTH_START = 2.0
+        OPACITY_START = 1.0
 
         def trace_updater(traceobj, starobj):
             color = starobj.get_color()
@@ -146,22 +154,21 @@ class NBodyAnimation(Scene):
                 last_line.get_end(),
                 starobj.get_center(),
                 color=color,
-                stroke_width=1.0,
-                stroke_opacity=0.75,
+                stroke_width=STROKE_WIDTH_START,
+                stroke_opacity=OPACITY_START,
             )
             traceobj.add(new_line)
 
-            opacity_values = np.linspace(0.75, 0.25, len(traceobj))
-            stroke_with_decay = 0.9
-            for i, line in enumerate(traceobj):
-                line.set_stroke(
-                    color=line.get_stroke_color(),
-                    width=line.get_stroke_width() * stroke_with_decay,
-                    opacity=opacity_values[i],
-                )
-
             if len(traceobj) > self.trace_length:
                 traceobj.remove(traceobj[0])
+
+            # update opacity and stroke width
+            opacity_decay = 0.99
+            stroke_decay = 0.99
+            for i, line in enumerate(traceobj[::-1]):
+                opacity = max(0.25, OPACITY_START * opacity_decay**i)
+                stroke_width = max(0.1, STROKE_WIDTH_START * stroke_decay**i)
+                line.set_stroke(color=line.get_stroke_color(), width=stroke_width, opacity=opacity)
 
         # print(f"{num_samples}, {frame_time}s = {num_samples * frame_time} s")
 

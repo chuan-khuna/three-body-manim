@@ -1,8 +1,8 @@
 from manim import *
 
 config["frame_size"] = (1440, 1440)
-config["frame_height"] = 5.5
-config["frame_width"] = 5.5
+config["frame_height"] = 4.5
+config["frame_width"] = 4.5
 FPS = 60
 config["frame_rate"] = FPS
 config["background_color"] = BLACK
@@ -37,6 +37,23 @@ def initialise_stars(configs, masses, G=1):
     return stars
 
 
+def load_config_from_df(df, name):
+    rows = df[df['name'] == name]
+    if rows.empty:
+        raise ValueError(f'No configuration with name "{name}" found')
+    if len(rows) > 1:
+        print(f'Warning: multiple configurations with name "{name}" found')
+    return rows.iloc[0]
+
+
+def get_masses(row):
+    return list(row.iloc[3:6])
+
+
+def get_position_velocity(row):
+    return list(row.iloc[6:])
+
+
 colours = [RED, GREEN, BLUE, YELLOW, PURPLE, ORANGE, TEAL, PINK, GREY]
 
 
@@ -45,33 +62,30 @@ class NBodyAnimation(Scene):
     def __init__(self):
         super().__init__()
 
-        position_velocity = [
-            -0.337076702,
-            0,
-            0,
-            0.9174260238,
-            2.1164029743,
-            0,
-            0,
-            -0.0922665014,
-            -1.7793262723,
-            0,
-            0,
-            -0.8251595224,
-        ]
-        masses = [1, 1, 1]
+        df = pd.read_csv('configurations.csv')
 
-        self.stars = initialise_stars(configs=position_velocity, masses=masses, G=1)
+        name = 'Broucke A 11'
 
-        self.dt = 5e-4
+        # load data from csv
+        row_conf = load_config_from_df(df, name)
+        masses = get_masses(row_conf)
+        position_velocity = get_position_velocity(row_conf)
+        dt = row_conf['dt']
+        num_steps = row_conf['num_steps']
+
+        self.dt = dt
 
         # how long to run the simulation for
         # how many it will repeat/completed
-        self.num_steps = 400e3
-        self.df = self.compute()
-
+        self.num_steps = num_steps
         self.star_radius = 0.025
         self.trace_length = 40
+
+        self.conf_name = name
+        self.show_name = True
+
+        self.stars = initialise_stars(configs=position_velocity, masses=masses, G=1)
+        self.df = self.compute()
 
     def compute(self) -> pd.DataFrame:
         star_positions = {}
@@ -83,8 +97,8 @@ class NBodyAnimation(Scene):
 
         for step in tqdm(
             range(0, int(self.num_steps)),
-            desc='Computing trajectories',
-            ncols=100,
+            desc=f'Computing trajectories {self.conf_name} (dt={self.dt})',
+            ncols=120,
             total=int(self.num_steps),
         ):
             # current states
@@ -152,8 +166,10 @@ class NBodyAnimation(Scene):
 
         frame_time = 0.001
 
-        STROKE_WIDTH_START = 4
+        STROKE_WIDTH_START = 1.5
         OPACITY_START = 1.0
+        OPACITY_END = 0.5
+        STROKE_WIDTH_END = 0.25
 
         df = self._sample_df(self.df, num_samples=num_samples)
         df_by_star = self._get_star_df_dict(df)
@@ -179,8 +195,8 @@ class NBodyAnimation(Scene):
             opacity_decay = 0.99
             stroke_decay = 0.99
             for i, line in enumerate(traceobj[::-1]):
-                opacity = max(0.4, OPACITY_START * opacity_decay**i)
-                stroke_width = max(0.2, STROKE_WIDTH_START * stroke_decay**i)
+                opacity = max(OPACITY_END, OPACITY_START * opacity_decay**i)
+                stroke_width = max(STROKE_WIDTH_END, STROKE_WIDTH_START * stroke_decay**i)
                 line.set_stroke(color=line.get_stroke_color(), width=stroke_width, opacity=opacity)
 
         star_objs = {}
@@ -219,6 +235,10 @@ class NBodyAnimation(Scene):
         self.add(*[star for star in star_objs.values()])
         self.add(*[trace for trace in star_traces.values()])
         # self.wait(0.25)
+        if self.show_name:
+            name = Text(f'{self.conf_name}', font_size=6, font='Inconsolata', fill_opacity=0.5)
+            name.to_corner(DR)
+            self.add(name)
 
         # animate
         for step in range(num_samples):

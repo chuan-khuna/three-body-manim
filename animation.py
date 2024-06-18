@@ -168,7 +168,7 @@ class NBodyAnimation(Scene):
 
         STROKE_WIDTH_START = 1.5
         OPACITY_START = 1.0
-        OPACITY_END = 0.5
+        OPACITY_END = 0.75
         STROKE_WIDTH_END = 0.25
 
         df = self._sample_df(self.df, num_samples=num_samples)
